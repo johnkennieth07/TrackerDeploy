@@ -1,0 +1,62 @@
+using CampusPulse.Hubs;
+using CampusPulse.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Services ──
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// SignalR for real-time location updates
+builder.Services.AddSignalR();
+
+// HttpClient for Nominatim Geocoding API
+builder.Services.AddHttpClient("Nominatim", client =>
+{
+    client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+    client.DefaultRequestHeaders.Add("User-Agent", "CampusPulse/1.0");
+    client.DefaultRequestHeaders.Add("Accept-Language", "en");
+});
+
+// App services
+builder.Services.AddSingleton<StudentService>();
+builder.Services.AddScoped<GeocodingService>();
+
+// CORS — allow frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins(
+            "http://localhost:3000",
+            "http://localhost:5500",
+            "https://campuspulse.onrender.com" // 👈 replace with your actual Render URL
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials());
+});
+
+var app = builder.Build();
+
+// ── Middleware ──
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseCors("AllowFrontend");
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
+
+app.MapControllers();
+
+// SignalR Hub route
+app.MapHub<LocationHub>("/locationHub");
+
+// Serve index.html as default
+app.MapFallbackToFile("index.html");
+
+app.Run();

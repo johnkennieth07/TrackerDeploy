@@ -1,3 +1,5 @@
+Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
+
 using CampusPulse.Hubs;
 using CampusPulse.Services;
 
@@ -30,7 +32,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:3000",
             "http://localhost:5500",
-            "https://campuspulse.onrender.com" // 👈 replace with your actual Render URL
+            "https://render-deploy-krrm.onrender.com"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
@@ -39,6 +41,7 @@ builder.Services.AddCors(options =>
 
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 var app = builder.Build();
 
 // ── Middleware ──

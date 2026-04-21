@@ -32,7 +32,7 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:3000",
             "http://localhost:5500",
-            "https://render-deploy-krrm.onrender.com"
+            "https://student-tracker-campus-pulse.onrender.com"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()

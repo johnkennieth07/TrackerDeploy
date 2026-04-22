@@ -193,7 +193,7 @@
 </div>
 
 <div class="campus-bar">
-  <button class="campus-tab active all"     onclick="setCampusFilter('all',this)">🏫 All Campuses</button>
+  <button class="campus-tab active all"     onclick="setCampusFilter('all',this)">🏫 All</button>
   <button class="campus-tab main"           onclick="setCampusFilter('main',this)"><span style="background:var(--c-main);border-radius:50%;display:inline-block;width:7px;height:7px"></span> Main Campus</button>
   <button class="campus-tab oldsagay"       onclick="setCampusFilter('oldsagay',this)"><span style="background:var(--c-oldsagay);border-radius:50%;display:inline-block;width:7px;height:7px"></span> Old Sagay</button>
   <button class="campus-tab escalante"      onclick="setCampusFilter('escalante',this)"><span style="background:var(--c-escalante);border-radius:50%;display:inline-block;width:7px;height:7px"></span> Escalante</button>
@@ -658,7 +658,6 @@ function handleLiveUpdate(p) {
     s.lng = c.lng;
 
     renderAll();
-    if (selectedId === s.id) selectStudent(s.id);
     logActivity(fullName(s), '📡 GPS — ' + (trueStatus === 'on-campus' ? 'Inside Campus' : 'Outside Campus'), true);
   } else {
     // Brand-new student arriving from tracker for the first time

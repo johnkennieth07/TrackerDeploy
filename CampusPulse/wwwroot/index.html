@@ -921,6 +921,9 @@ dashConnection.on('ReceiveLocationUpdate', (data) => {
   handleLiveUpdate({
     studentName: data.studentName || data.StudentName,
     studentId:   data.studentId   || data.StudentId,
+    course:      data.course      || data.Course,
+    year:        data.year        || data.Year,
+    hometown:    data.hometown    || data.Hometown,
     campus:      data.campus      || data.Campus,
     latitude:    data.latitude    || data.Latitude,
     longitude:   data.longitude   || data.Longitude,

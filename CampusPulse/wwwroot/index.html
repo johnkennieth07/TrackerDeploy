@@ -735,14 +735,15 @@ setInterval(() => {
 // ════════════════════════════════════════════════════
 function openEditModal(id) {
   const s = students.find(x => x.id === id); if (!s) return;
+  const clean = v => (!v || v === '—' || v === '— (Live Tracker)' || v === '— (via GPS)') ? '' : v;
   document.getElementById('eId').value        = s.id;
-  document.getElementById('eFirstName').value = s.firstName;
-  document.getElementById('eLastName').value  = s.lastName;
-  document.getElementById('eCourse').value    = s.course;
-  document.getElementById('eYear').value      = s.year;
-  document.getElementById('eCampus').value    = s.campus;
-  document.getElementById('eHometown').value  = s.hometown;
-  document.getElementById('eStudentId').value = s.studentId || '';
+  document.getElementById('eFirstName').value = clean(s.firstName);
+  document.getElementById('eLastName').value  = clean(s.lastName);
+  document.getElementById('eCourse').value    = clean(s.course);
+  document.getElementById('eYear').value      = clean(s.year) || '1st Year';
+  document.getElementById('eCampus').value    = s.campus || 'main';
+  document.getElementById('eHometown').value  = clean(s.hometown);
+  document.getElementById('eStudentId').value = clean(s.studentId);
   document.getElementById('editOverlay').classList.add('visible');
 }
 function openEditModalFromPanel() { if (selectedId) openEditModal(selectedId); }

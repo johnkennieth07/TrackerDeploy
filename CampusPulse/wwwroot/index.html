@@ -43,7 +43,7 @@
     .live-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite;}
 
     /* Hamburger — mobile only */
-    .menu-btn{display:none;background:transparent;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;line-height:1;}
+    .menu-btn{display:none;background:transparent;border:none;color:var(--text);font-size:1.4rem;cursor:pointer;padding:10px;border-radius:7px;line-height:1;min-width:44px;min-height:44px;align-items:center;justify-content:center;}
     .menu-btn:hover{background:var(--surface2);}
 
     /* ══════════════ RECEIVER BANNER ══════════════ */
@@ -75,13 +75,24 @@
     .campus-tab.active.lagaan{background:var(--c-lagaan);border-color:var(--c-lagaan);}
 
     /* ══════════════ LAYOUT ══════════════ */
+    /* app-body covers full width; map-container has left margin for sidebar on desktop */
     .app-body{display:flex;flex:1;overflow:hidden;height:calc(100vh - var(--header-h) - var(--campus-bar-h));}
+    .map-container{flex:1;position:relative;overflow:hidden;margin-left:285px;}
 
     /* ══════════════ SIDEBAR ══════════════ */
+    /* Always fixed — on desktop it sits flush left inside the layout area */
     .sidebar{
-      width:285px;background:var(--surface);border-right:1px solid var(--border);
-      display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
-      transition:transform 0.3s ease,width 0.3s ease;
+      position:fixed;
+      top:calc(var(--header-h) + var(--campus-bar-h));
+      left:0;
+      width:285px;
+      height:calc(100vh - var(--header-h) - var(--campus-bar-h));
+      background:var(--surface);
+      border-right:1px solid var(--border);
+      display:flex;flex-direction:column;overflow:hidden;
+      z-index:1000;
+      transition:transform 0.3s ease;
+      /* Desktop: always visible, no transform needed */
     }
     .sidebar-section{padding:12px 16px;border-bottom:1px solid var(--border);}
     .section-label{font-family:'Syne',sans-serif;font-size:0.63rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
@@ -133,7 +144,6 @@
     }
 
     /* ══════════════ MAP ══════════════ */
-    .map-container{flex:1;position:relative;overflow:hidden;}
     #map{width:100%;height:100%;}
     .map-controls{position:absolute;top:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:5px;}
     .map-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 11px;font-size:0.7rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
@@ -261,7 +271,7 @@
     /* Sidebar drawer overlay (mobile) */
     .sidebar-overlay{
       display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
-      z-index:150;opacity:0;transition:opacity 0.3s;
+      z-index:900;opacity:0;transition:opacity 0.3s;
     }
     .sidebar-overlay.active{display:block;opacity:1;}
 
@@ -280,6 +290,7 @@
     /* ══════════════ TABLET (768–1024px) ══════════════ */
     @media (max-width:1024px){
       .sidebar{width:250px;}
+      .map-container{margin-left:250px;}
       .activity-log{width:200px;}
       .header-center .campus-name{font-size:0.85rem;}
       .header-center .campus-sub{display:none;}
@@ -305,16 +316,20 @@
       /* App body fills to bottom nav */
       .app-body{height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));}
 
-      /* Sidebar becomes a slide-in drawer */
+      /* Map takes full width — no sidebar margin on mobile */
+      .map-container{margin-left:0;width:100%;}
+
+      /* Sidebar: hidden off-screen by default, slides in as overlay drawer */
       .sidebar{
-        position:fixed;top:calc(var(--header-h) + var(--campus-bar-h));left:0;
+        top:calc(var(--header-h) + var(--campus-bar-h));
         height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));
-        z-index:160;transform:translateX(-100%);width:290px;
+        width:290px;
+        z-index:1000;
+        transform:translateX(-100%);
+        -webkit-overflow-scrolling:touch;
+        overflow-y:auto;
       }
       .sidebar.open{transform:translateX(0);}
-
-      /* Map takes full width */
-      .map-container{width:100%;}
 
       /* Map controls — compact on mobile */
       .map-controls{top:8px;right:8px;gap:4px;}
@@ -364,7 +379,7 @@
     /* ══════════════ LANDSCAPE MOBILE ══════════════ */
     @media (max-width:768px) and (orientation:landscape){
       :root{--bottom-nav-h:50px;}
-      .sidebar{height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));}
+      .sidebar{height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));overflow-y:auto;}
       .modal{max-height:95vh;}
     }
 
@@ -407,43 +422,42 @@
   <button class="campus-tab lagaan"         onclick="setCampusFilter('lagaan',this)"><span style="background:var(--c-lagaan);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Laga-an</button>
 </div>
 
-<div class="app-body">
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-section">
-      <div class="section-label">Overview</div>
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Students</div></div>
-        <div class="stat-card"><div class="stat-value green" id="statOnCampus">0</div><div class="stat-label">Inside Campus</div></div>
-        <div class="stat-card"><div class="stat-value orange" id="statOffCampus">0</div><div class="stat-label">Outside Campus</div></div>
-        <div class="stat-card"><div class="stat-value purple" id="statCampuses">4</div><div class="stat-label">Campuses</div></div>
-      </div>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-section">
+    <div class="section-label">Overview</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Students</div></div>
+      <div class="stat-card"><div class="stat-value green" id="statOnCampus">0</div><div class="stat-label">Inside Campus</div></div>
+      <div class="stat-card"><div class="stat-value orange" id="statOffCampus">0</div><div class="stat-label">Outside Campus</div></div>
+      <div class="stat-card"><div class="stat-value purple" id="statCampuses">4</div><div class="stat-label">Campuses</div></div>
     </div>
-    <div class="sidebar-section">
-      <div class="section-label">Campus Legend</div>
-      <div class="campus-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-main)"></div>Main — Sagay City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-oldsagay)"></div>Old Sagay — Sagay City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-escalante)"></div>Escalante — Escalante City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-lagaan)"></div>Laga-an — Calatrava</div>
-      </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="section-label">Campus Legend</div>
+    <div class="campus-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-main)"></div>Main — Sagay City</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-oldsagay)"></div>Old Sagay — Sagay City</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-escalante)"></div>Escalante — Escalante City</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-lagaan)"></div>Laga-an — Calatrava</div>
     </div>
-    <div class="sidebar-section">
-      <div class="section-label">Search & Filter</div>
-      <input class="search-box" type="text" id="searchInput" placeholder="Search name, course, ID…" oninput="renderStudentList()"/>
-      <div class="filter-tabs">
-        <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
-        <button class="filter-tab" onclick="setFilter('on-campus',this)">Inside</button>
-        <button class="filter-tab" onclick="setFilter('off-campus',this)">Outside</button>
-      </div>
+  </div>
+  <div class="sidebar-section">
+    <div class="section-label">Search & Filter</div>
+    <input class="search-box" type="text" id="searchInput" placeholder="Search name, course, ID…" oninput="renderStudentList()"/>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setFilter('all',this)">All</button>
+      <button class="filter-tab" onclick="setFilter('on-campus',this)">Inside</button>
+      <button class="filter-tab" onclick="setFilter('off-campus',this)">Outside</button>
     </div>
-    <!-- Desktop add button inside sidebar -->
-    <div class="sidebar-section" style="display:flex;gap:7px;">
-      <button class="btn btn-primary" style="flex:1;padding:8px;font-size:0.75rem;border-radius:7px;border:none;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;" onclick="openCreateModal()">+ Add Student</button>
-    </div>
-    <div class="section-label" style="padding:10px 16px 0">Students</div>
-    <div class="student-list" id="studentList"></div>
-  </aside>
+  </div>
+  <div class="sidebar-section" style="display:flex;gap:7px;">
+    <button class="btn btn-primary" style="flex:1;padding:8px;font-size:0.75rem;border-radius:7px;border:none;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;" onclick="openCreateModal()">+ Add Student</button>
+  </div>
+  <div class="section-label" style="padding:10px 16px 0">Students</div>
+  <div class="student-list" id="studentList"></div>
+</aside>
 
+<div class="app-body">
   <div class="map-container">
     <div id="map"></div>
     <div class="map-controls">

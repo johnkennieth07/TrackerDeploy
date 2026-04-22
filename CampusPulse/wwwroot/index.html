@@ -479,7 +479,7 @@
 
 <!-- BOTTOM NAV (mobile) -->
 <nav class="bottom-nav" id="bottomNav">
-  <button class="bottom-nav-btn" id="navMap" onclick="mobileNav('map')">
+  <button class="bottom-nav-btn active" id="navMap" onclick="mobileNav('map')">
     <span class="nav-icon">🗺️</span>Map
   </button>
   <button class="bottom-nav-btn" id="navList" onclick="mobileNav('list')">
@@ -597,11 +597,11 @@ const CAMPUSES = {
 };
 
 const HEADER_INFO = {
-  all:       { name:'State University of Northern Negros',  sub:'Multi-Campus Real-time Dashboard',       color:'var(--accent)' },
-  main:      { name:'Main Campus — Sagay City',             sub:'SUNN Main Campus · Negros Occidental',   color:'var(--c-main)' },
+  all:       { name:'State University of Northern Negros',  sub:'Multi-Campus Real-time Dashboard',          color:'var(--accent)' },
+  main:      { name:'Main Campus — Sagay City',             sub:'SUNN Main Campus · Negros Occidental',      color:'var(--c-main)' },
   oldsagay:  { name:'Old Sagay Campus — Sagay City',        sub:'SUNN Old Sagay Campus · Negros Occidental', color:'var(--c-oldsagay)' },
   escalante: { name:'Escalante Campus — Escalante City',    sub:'SUNN Escalante Campus · Negros Occidental', color:'var(--c-escalante)' },
-  lagaan:    { name:'Laga-an Campus — Calatrava',           sub:'SUNN Laga-an Campus · Negros Occidental',  color:'var(--c-lagaan)' },
+  lagaan:    { name:'Laga-an Campus — Calatrava',           sub:'SUNN Laga-an Campus · Negros Occidental',   color:'var(--c-lagaan)' },
 };
 
 const AVATAR_COLORS=['#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#dc2626','#9333ea','#0284c7'];
@@ -612,20 +612,17 @@ let activeFilter='all', activeCampus='all', selectedId=null, deleteTargetId=null
 // ════════════════════════════════════════════════════
 // MOBILE NAV STATE
 // ════════════════════════════════════════════════════
-let mobileView = 'map'; // 'map' | 'list' | 'stats' | 'log'
+let mobileView = 'map';
 
 function isMobile() { return window.innerWidth <= 768; }
 
-function toggleSidebar() {
-  const sidebar  = document.getElementById('sidebar');
-  const overlay  = document.getElementById('sidebarOverlay');
-  const isOpen   = sidebar.classList.contains('open');
-  if (isOpen) { closeSidebar(); }
-  else {
-    sidebar.classList.add('open');
-    overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
+// ── Sidebar helpers ──────────────────────────────────
+function openSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.add('open');
+  overlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeSidebar() {
@@ -634,34 +631,49 @@ function closeSidebar() {
   document.body.style.overflow = '';
 }
 
+// Hamburger always toggles correctly based on current state
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar.classList.contains('open')) {
+    closeSidebar();
+  } else {
+    openSidebar();
+  }
+}
+
 function mobileNav(view) {
   mobileView = view;
+
   // Update active state on nav buttons
   ['map','list','stats','log'].forEach(v => {
     const btn = document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1));
     if (btn) btn.classList.toggle('active', v === view);
   });
 
-  const sidebar     = document.getElementById('sidebar');
-  const mapCont     = document.querySelector('.map-container');
   const activityLog = document.querySelector('.activity-log');
-
-  // Reset
-  mapCont.style.display = 'block';
   activityLog.style.display = '';
 
   if (view === 'map') {
     closeSidebar();
     setTimeout(() => map.invalidateSize(), 50);
   } else if (view === 'list') {
-    toggleSidebar();
+    // Always open (not toggle) so state is predictable
+    openSidebar();
+    // Scroll to student list section
+    setTimeout(() => {
+      const list = document.getElementById('studentList');
+      if (list) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
   } else if (view === 'stats') {
-    toggleSidebar();
+    // Always open (not toggle) so state is predictable
+    openSidebar();
     // Scroll sidebar to top to show stats
-    document.getElementById('sidebar').scrollTop = 0;
+    setTimeout(() => {
+      const sb = document.getElementById('sidebar');
+      if (sb) sb.scrollTop = 0;
+    }, 50);
   } else if (view === 'log') {
     closeSidebar();
-    // Show activity log prominently
     activityLog.style.display = 'block';
   }
 }
@@ -680,7 +692,6 @@ window.addEventListener('resize', () => {
 // ════════════════════════════════════════════════════
 const map = L.map('map', { center:[10.76, 123.43], zoom:10, zoomControl:true });
 
-// Move zoom control to bottom-right on mobile to avoid overlap
 if (isMobile()) {
   map.zoomControl.setPosition('bottomright');
 }
@@ -939,7 +950,6 @@ function setCampusFilter(id, btn) {
   } else {
     map.setView([10.76, 123.43], 10, { animate:true });
   }
-  // Close sidebar on mobile after selecting campus
   if (isMobile()) closeSidebar();
 }
 
@@ -1218,9 +1228,6 @@ renderAll();
 logActivity('System','CampusPulse started — 4 campuses loaded');
 logActivity('System','Waiting for students from tracker…');
 startDashSignalR();
-
-// Init bottom nav — map is default active
-document.getElementById('navMap').classList.add('active');
 </script>
 </body>
 </html>

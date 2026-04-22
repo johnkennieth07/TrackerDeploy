@@ -648,7 +648,11 @@ function handleLiveUpdate(p) {
     s.rawLng      = p.longitude;
     s.rawAccuracy = p.accuracy;
     s.status      = trueStatus;
-    s.campus      = p.campus || s.campus;
+    s.campus      = p.campus    || s.campus;
+    s.course      = p.course    || s.course;
+    s.year        = p.year      || s.year;
+    s.hometown    = p.hometown  || s.hometown;
+    s.studentId   = p.studentId || s.studentId;
     s.isLive      = true;
     s.lastLiveUpdate = p.timestamp;
 
@@ -668,10 +672,10 @@ function handleLiveUpdate(p) {
       id:           Date.now(),
       firstName:    parts[0] || 'Unknown',
       lastName:     parts.slice(1).join(' ') || '',
-      course:       '— (Live Tracker)',
-      year:         '—',
+      course:       p.course    || '—',
+      year:         p.year      || '—',
       campus:       campusKey,
-      hometown:     '— (via GPS)',
+      hometown:     p.hometown  || '—',
       studentId:    p.studentId || '—',
       status:       trueStatus,
       lat:          c.lat,        // always campus centre on the map

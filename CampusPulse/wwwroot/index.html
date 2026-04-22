@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>CampusPulse — SUNN Multi-Campus Dashboard</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css"/>
@@ -11,39 +11,78 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
   <script src="https://unpkg.com/@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
   <style>
-    :root{--bg:#0a0f1e;--surface:#111827;--surface2:#1a2235;--border:#1f2d45;--accent:#00e5ff;--accent3:#10b981;--text:#e2e8f0;--muted:#64748b;--danger:#ef4444;--warning:#f59e0b;--c-main:#00e5ff;--c-oldsagay:#10b981;--c-escalante:#f59e0b;--c-lagaan:#a78bfa;}
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+    :root{
+      --bg:#0a0f1e;--surface:#111827;--surface2:#1a2235;--border:#1f2d45;
+      --accent:#00e5ff;--accent3:#10b981;--text:#e2e8f0;--muted:#64748b;
+      --danger:#ef4444;--warning:#f59e0b;
+      --c-main:#00e5ff;--c-oldsagay:#10b981;--c-escalante:#f59e0b;--c-lagaan:#a78bfa;
+      --header-h:54px;--campus-bar-h:44px;--bottom-nav-h:60px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    html,body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100%;overflow:hidden;}
+
+    /* ══════════════ LOADING BAR ══════════════ */
     .loading-bar{position:fixed;top:0;left:0;height:2px;background:var(--accent);z-index:9999;transition:width 0.3s ease;box-shadow:0 0 8px var(--accent);}
-    header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:54px;background:var(--surface);border-bottom:1px solid var(--border);z-index:100;flex-shrink:0;transition:border-bottom-color 0.3s;}
-    .logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-0.5px;}
+
+    /* ══════════════ HEADER ══════════════ */
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:0 16px;height:var(--header-h);
+      background:var(--surface);border-bottom:1px solid var(--border);
+      z-index:200;flex-shrink:0;transition:border-bottom-color 0.3s;
+      position:relative;
+    }
+    .logo{display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;letter-spacing:-0.5px;flex-shrink:0;}
     .logo-dot{width:9px;height:9px;background:var(--accent);border-radius:50%;animation:blink 2s infinite;box-shadow:0 0 10px var(--accent);}
     @keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.75)}}
-    /* Header center changes on campus click */
-    .header-center{font-size:0.74rem;color:var(--muted);text-align:center;line-height:1.6;}
+    .header-center{font-size:0.74rem;color:var(--muted);text-align:center;line-height:1.6;flex:1;padding:0 10px;}
     .header-center .campus-name{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;display:block;}
     .header-center .campus-sub{color:var(--muted);font-size:0.68rem;}
-    .header-right{display:flex;align-items:center;gap:8px;}
+    .header-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}
     .live-badge{display:flex;align-items:center;gap:5px;background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.25);border-radius:20px;padding:3px 10px;font-size:0.68rem;font-weight:500;color:var(--accent);}
     .live-dot{width:5px;height:5px;background:var(--accent);border-radius:50%;animation:blink 1.5s infinite;}
-    .add-btn{background:var(--accent);color:#0a0f1e;border:none;border-radius:7px;padding:6px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;}
-    .add-btn:hover{background:#00c4e0;}
-    .tracker-btn{background:transparent;color:var(--accent3);border:1px solid rgba(16,185,129,0.35);border-radius:7px;padding:6px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.75rem;cursor:pointer;}
-    .tracker-btn:hover{background:rgba(16,185,129,0.08);}
+
+    /* Hamburger — mobile only */
+    .menu-btn{display:none;background:transparent;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:6px;border-radius:7px;line-height:1;}
+    .menu-btn:hover{background:var(--surface2);}
+
+    /* ══════════════ RECEIVER BANNER ══════════════ */
     .receiver-banner{display:none;align-items:center;gap:8px;padding:6px 16px;background:rgba(16,185,129,0.08);border-bottom:1px solid rgba(16,185,129,0.2);font-size:0.72rem;color:var(--accent3);flex-shrink:0;}
     .receiver-banner.active{display:flex;}
     .recv-dot{width:6px;height:6px;border-radius:50%;background:var(--accent3);animation:blink 1s infinite;}
-    .campus-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;}
-    .campus-tab{display:flex;align-items:center;justify-content:center;gap:6px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:0.72rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.3s;white-space:nowrap;flex:1;}
+
+    /* ══════════════ CAMPUS BAR ══════════════ */
+    .campus-bar{
+      display:flex;align-items:center;gap:6px;padding:6px 12px;
+      background:var(--surface);border-bottom:1px solid var(--border);
+      flex-shrink:0;overflow-x:auto;height:var(--campus-bar-h);
+      scrollbar-width:none;
+    }
+    .campus-bar::-webkit-scrollbar{display:none;}
+    .campus-tab{
+      display:flex;align-items:center;justify-content:center;gap:5px;
+      padding:5px 12px;border-radius:20px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);font-size:0.72rem;
+      font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.3s;
+      white-space:nowrap;flex:1;min-width:80px;
+    }
     .campus-tab:hover{border-color:var(--accent);color:var(--text);}
-    .campus-tab.active{color:#0a0f1e;font-weight:600;flex:4;}
+    .campus-tab.active{color:#0a0f1e;font-weight:600;flex:3;}
     .campus-tab.active.all{background:var(--accent);border-color:var(--accent);}
     .campus-tab.active.main{background:var(--c-main);border-color:var(--c-main);}
     .campus-tab.active.oldsagay{background:var(--c-oldsagay);border-color:var(--c-oldsagay);}
     .campus-tab.active.escalante{background:var(--c-escalante);border-color:var(--c-escalante);}
     .campus-tab.active.lagaan{background:var(--c-lagaan);border-color:var(--c-lagaan);}
-    .main{display:flex;flex:1;overflow:hidden;}
-    .sidebar{width:285px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+
+    /* ══════════════ LAYOUT ══════════════ */
+    .app-body{display:flex;flex:1;overflow:hidden;height:calc(100vh - var(--header-h) - var(--campus-bar-h));}
+
+    /* ══════════════ SIDEBAR ══════════════ */
+    .sidebar{
+      width:285px;background:var(--surface);border-right:1px solid var(--border);
+      display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;
+      transition:transform 0.3s ease,width 0.3s ease;
+    }
     .sidebar-section{padding:12px 16px;border-bottom:1px solid var(--border);}
     .section-label{font-family:'Syne',sans-serif;font-size:0.63rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
     .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
@@ -66,34 +105,47 @@
     .student-list{flex:1;overflow-y:auto;padding:7px 0;}
     .student-list::-webkit-scrollbar{width:3px;}
     .student-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
-    .student-item{display:flex;align-items:center;gap:9px;padding:8px 16px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent;}
+    .student-item{display:flex;align-items:center;gap:9px;padding:10px 16px;cursor:pointer;transition:background 0.15s;border-left:2px solid transparent;}
     .student-item:hover{background:var(--surface2);border-left-color:var(--accent);}
     .student-item.selected{background:rgba(0,229,255,0.06);border-left-color:var(--accent);}
     .student-item.live-update{animation:liveFlash 0.7s ease;}
     @keyframes liveFlash{0%{background:rgba(16,185,129,0.18)}100%{background:transparent}}
-    .student-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;flex-shrink:0;}
+    .student-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;flex-shrink:0;}
     .student-info{flex:1;min-width:0;}
     .student-name{font-size:0.8rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
     .student-sub{font-size:0.68rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    /* Status badge: on-campus = green, off-campus = orange */
     .status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
     .status-dot.on-campus{background:var(--accent3);box-shadow:0 0 4px var(--accent3);}
     .status-dot.off-campus{background:var(--warning);}
     .item-actions{display:none;gap:3px;flex-shrink:0;}
     .student-item:hover .item-actions{display:flex;}
-    .item-btn{background:transparent;border:none;cursor:pointer;font-size:0.75rem;padding:3px 5px;border-radius:4px;transition:all 0.15s;}
+    .item-btn{background:transparent;border:none;cursor:pointer;font-size:0.75rem;padding:5px 6px;border-radius:4px;transition:all 0.15s;}
     .item-btn.edit{color:var(--accent);}
     .item-btn.edit:hover{background:rgba(0,229,255,0.12);}
     .item-btn.del{color:var(--muted);}
     .item-btn.del:hover{color:var(--danger);background:rgba(239,68,68,0.1);}
     .item-btn.emergency{color:var(--warning);}
     .item-btn.emergency:hover{background:rgba(245,158,11,0.12);}
+    /* Always show actions on touch devices */
+    @media (hover:none){
+      .item-actions{display:flex!important;}
+      .item-btn{font-size:0.85rem;padding:6px 8px;}
+    }
+
+    /* ══════════════ MAP ══════════════ */
     .map-container{flex:1;position:relative;overflow:hidden;}
     #map{width:100%;height:100%;}
     .map-controls{position:absolute;top:12px;right:12px;z-index:1000;display:flex;flex-direction:column;gap:5px;}
     .map-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:6px 11px;font-size:0.7rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
     .map-btn:hover,.map-btn.active{border-color:var(--accent);color:var(--accent);}
-    .info-panel{position:absolute;bottom:16px;left:12px;z-index:1000;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px;min-width:215px;display:none;}
+
+    /* ══════════════ INFO PANEL ══════════════ */
+    .info-panel{
+      position:absolute;bottom:16px;left:12px;z-index:1000;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:11px;padding:13px 15px;min-width:215px;display:none;
+      max-width:calc(100vw - 24px);
+    }
     .info-panel.visible{display:block;}
     .info-panel-name{font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;margin-bottom:3px;}
     .info-panel-detail{font-size:0.71rem;color:var(--muted);margin-bottom:2px;}
@@ -108,7 +160,22 @@
     .panel-btn.del-panel{border-color:var(--danger);color:var(--danger);}
     .panel-btn.emg-panel{border-color:var(--warning);color:var(--warning);}
     .panel-btn:hover{opacity:0.75;}
-    .activity-log{position:absolute;bottom:16px;right:12px;z-index:1000;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:10px 13px;width:230px;max-height:175px;overflow-y:auto;}
+
+    /* Close button for info panel (mobile) */
+    .info-panel-close{
+      display:none;position:absolute;top:8px;right:8px;
+      background:transparent;border:none;color:var(--muted);
+      font-size:1rem;cursor:pointer;padding:4px;border-radius:4px;line-height:1;
+    }
+    .info-panel-close:hover{color:var(--text);}
+
+    /* ══════════════ ACTIVITY LOG ══════════════ */
+    .activity-log{
+      position:absolute;bottom:16px;right:12px;z-index:1000;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:11px;padding:10px 13px;width:230px;max-height:175px;
+      overflow-y:auto;
+    }
     .activity-log::-webkit-scrollbar{width:2px;}
     .activity-log::-webkit-scrollbar-thumb{background:var(--border);}
     .activity-title{font-family:'Syne',sans-serif;font-size:0.63rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
@@ -117,15 +184,17 @@
     .activity-item span{color:var(--accent);}
     .activity-item span.live{color:var(--accent3);}
     @keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
-    /* Empty state */
+
+    /* ══════════════ EMPTY STATE ══════════════ */
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:30px 16px;text-align:center;color:var(--muted);}
     .empty-state .empty-icon{font-size:2.2rem;margin-bottom:10px;opacity:0.4;}
     .empty-state .empty-title{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;margin-bottom:6px;color:var(--text);opacity:0.5;}
     .empty-state .empty-sub{font-size:0.72rem;line-height:1.5;}
-    /* Modals */
-    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;display:none;align-items:center;justify-content:center;}
+
+    /* ══════════════ MODALS ══════════════ */
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;display:none;align-items:center;justify-content:center;padding:16px;}
     .modal-overlay.visible{display:flex;}
-    .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;width:390px;animation:slideUp 0.28s ease;}
+    .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:390px;animation:slideUp 0.28s ease;max-height:90vh;overflow-y:auto;}
     @keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
     .modal-title{font-family:'Syne',sans-serif;font-weight:800;font-size:1rem;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
     .modal-badge{font-size:0.6rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:20px;}
@@ -134,12 +203,12 @@
     .modal-badge.emergency{background:rgba(239,68,68,0.12);color:var(--danger);}
     .form-group{margin-bottom:11px;}
     .form-label{font-size:0.7rem;color:var(--muted);margin-bottom:4px;display:block;}
-    .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.8rem;outline:none;transition:border-color 0.2s;}
+    .form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s;}
     .form-input:focus,.form-select:focus{border-color:var(--accent);}
     .form-select option{background:var(--surface2);}
     .form-row{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
     .modal-actions{display:flex;gap:7px;margin-top:16px;}
-    .btn{flex:1;padding:9px;border-radius:7px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;transition:all 0.2s;}
+    .btn{flex:1;padding:11px;border-radius:7px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;transition:all 0.2s;}
     .btn-primary{background:var(--accent);color:#0a0f1e;}
     .btn-primary:hover{background:#00c4e0;}
     .btn-warning{background:var(--warning);color:#0a0f1e;}
@@ -148,20 +217,55 @@
     .btn-ghost:hover{color:var(--text);}
     .btn-danger-solid{background:var(--danger);color:#fff;}
     .btn-danger-solid:hover{background:#dc2626;}
-    .confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;width:320px;text-align:center;animation:slideUp 0.25s ease;}
+    .confirm-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px 24px;width:100%;max-width:320px;text-align:center;animation:slideUp 0.25s ease;}
     .confirm-icon{font-size:1.7rem;margin-bottom:7px;}
     .confirm-title{font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;margin-bottom:4px;}
     .confirm-msg{font-size:0.73rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
     .confirm-actions{display:flex;gap:7px;}
-    .btn-danger{flex:1;padding:9px;border-radius:7px;border:none;background:var(--danger);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;}
+    .btn-danger{flex:1;padding:11px;border-radius:7px;border:none;background:var(--danger);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;cursor:pointer;}
     .btn-danger:hover{background:#dc2626;}
-    /* Emergency result box */
     .emg-result{background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.25);border-radius:9px;padding:12px 14px;margin-top:12px;display:none;}
     .emg-result.visible{display:block;}
     .emg-coords{font-family:monospace;font-size:0.82rem;color:var(--danger);margin-top:5px;white-space:pre;}
     .emg-note{font-size:0.68rem;color:var(--muted);margin-top:5px;white-space:pre-wrap;}
     @keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
-    /* Leaflet popup */
+
+    /* ══════════════ BOTTOM NAV (mobile) ══════════════ */
+    .bottom-nav{
+      display:none;position:fixed;bottom:0;left:0;right:0;
+      height:var(--bottom-nav-h);background:var(--surface);
+      border-top:1px solid var(--border);z-index:300;
+      flex-direction:row;align-items:stretch;
+    }
+    .bottom-nav-btn{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;background:transparent;border:none;color:var(--muted);
+      font-family:'DM Sans',sans-serif;font-size:0.58rem;font-weight:500;
+      cursor:pointer;transition:color 0.2s;padding-bottom:4px;
+    }
+    .bottom-nav-btn .nav-icon{font-size:1.3rem;line-height:1;}
+    .bottom-nav-btn.active{color:var(--accent);}
+    .bottom-nav-btn.active .nav-icon{filter:drop-shadow(0 0 5px var(--accent));}
+
+    /* FAB — mobile add button */
+    .fab{
+      display:none;position:fixed;bottom:calc(var(--bottom-nav-h) + 14px);right:16px;
+      z-index:400;width:50px;height:50px;border-radius:50%;
+      background:var(--accent);color:#0a0f1e;border:none;font-size:1.5rem;
+      cursor:pointer;box-shadow:0 4px 18px rgba(0,229,255,0.4);
+      align-items:center;justify-content:center;line-height:1;
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .fab:active{transform:scale(0.92);box-shadow:0 2px 10px rgba(0,229,255,0.3);}
+
+    /* Sidebar drawer overlay (mobile) */
+    .sidebar-overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+      z-index:150;opacity:0;transition:opacity 0.3s;
+    }
+    .sidebar-overlay.active{display:block;opacity:1;}
+
+    /* ══════════════ LEAFLET POPUP ══════════════ */
     .leaflet-popup-content-wrapper{background:var(--surface)!important;border:1px solid var(--border)!important;border-radius:9px!important;box-shadow:0 8px 28px rgba(0,0,0,0.4)!important;color:var(--text)!important;}
     .leaflet-popup-tip{background:var(--surface)!important;}
     .leaflet-popup-content{margin:10px 13px!important;}
@@ -172,13 +276,116 @@
     .popup-status.green{color:var(--accent3);}
     .popup-status.yellow{color:var(--warning);}
     .popup-live{font-size:0.65rem;color:var(--accent3);margin-top:3px;}
+
+    /* ══════════════ TABLET (768–1024px) ══════════════ */
+    @media (max-width:1024px){
+      .sidebar{width:250px;}
+      .activity-log{width:200px;}
+      .header-center .campus-name{font-size:0.85rem;}
+      .header-center .campus-sub{display:none;}
+    }
+
+    /* ══════════════ MOBILE (≤768px) ══════════════ */
+    @media (max-width:768px){
+      :root{
+        --header-h:52px;
+        --campus-bar-h:40px;
+        --bottom-nav-h:60px;
+      }
+
+      /* Header */
+      .header-center{display:none;}
+      .menu-btn{display:flex;align-items:center;justify-content:center;}
+
+      /* Campus bar — thinner, scrollable */
+      .campus-bar{padding:5px 10px;height:var(--campus-bar-h);}
+      .campus-tab{min-width:70px;font-size:0.68rem;padding:4px 10px;flex:0 0 auto;}
+      .campus-tab.active{flex:0 0 auto;}
+
+      /* App body fills to bottom nav */
+      .app-body{height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));}
+
+      /* Sidebar becomes a slide-in drawer */
+      .sidebar{
+        position:fixed;top:calc(var(--header-h) + var(--campus-bar-h));left:0;
+        height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));
+        z-index:160;transform:translateX(-100%);width:290px;
+      }
+      .sidebar.open{transform:translateX(0);}
+
+      /* Map takes full width */
+      .map-container{width:100%;}
+
+      /* Map controls — compact on mobile */
+      .map-controls{top:8px;right:8px;gap:4px;}
+      .map-btn{padding:5px 9px;font-size:0.65rem;}
+
+      /* Activity log — bottom right, smaller */
+      .activity-log{width:180px;max-height:130px;padding:8px 10px;bottom:12px;right:8px;}
+      .activity-title{font-size:0.58rem;}
+      .activity-item{font-size:0.62rem;}
+
+      /* Info panel — stretch to near full width */
+      .info-panel{
+        left:8px;right:8px;bottom:8px;min-width:unset;width:auto;
+        padding:12px 13px;
+      }
+      .info-panel-close{display:block;}
+
+      /* Bottom nav visible */
+      .bottom-nav{display:flex;}
+
+      /* FAB visible */
+      .fab{display:flex;}
+
+      /* Modal — bottom sheet style */
+      .modal-overlay{align-items:flex-end;padding:0;}
+      .modal{border-radius:18px 18px 0 0;max-height:88vh;padding:20px 16px;width:100%;max-width:100%;}
+      .confirm-box{border-radius:18px 18px 0 0;max-width:100%;width:100%;padding:22px 16px;}
+      .form-row{grid-template-columns:1fr;}
+
+      /* Touch-friendly inputs */
+      .form-input,.form-select{font-size:1rem;padding:11px 13px;}
+      .btn,.btn-danger{padding:13px;}
+
+      /* Hide activity log on very small screens */
+      @media (max-width:480px){
+        .activity-log{display:none;}
+        .map-controls{display:none;}
+      }
+    }
+
+    /* ══════════════ SMALL MOBILE (≤480px) ══════════════ */
+    @media (max-width:480px){
+      .campus-bar{gap:4px;padding:4px 8px;}
+      .campus-tab{font-size:0.62rem;padding:4px 8px;min-width:60px;}
+    }
+
+    /* ══════════════ LANDSCAPE MOBILE ══════════════ */
+    @media (max-width:768px) and (orientation:landscape){
+      :root{--bottom-nav-h:50px;}
+      .sidebar{height:calc(100vh - var(--header-h) - var(--campus-bar-h) - var(--bottom-nav-h));}
+      .modal{max-height:95vh;}
+    }
+
+    /* ══════════════ SAFE AREA (notch/home bar) ══════════════ */
+    @supports (padding-bottom:env(safe-area-inset-bottom)){
+      .bottom-nav{padding-bottom:env(safe-area-inset-bottom);}
+      .fab{bottom:calc(var(--bottom-nav-h) + 14px + env(safe-area-inset-bottom));}
+    }
   </style>
 </head>
 <body>
 <div class="loading-bar" id="loadingBar" style="width:0%"></div>
 
+<!-- SIDEBAR OVERLAY (mobile backdrop) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
 <header id="mainHeader">
-  <div class="logo"><div class="logo-dot"></div>CampusPulse</div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <button class="menu-btn" onclick="toggleSidebar()" title="Open sidebar">☰</button>
+    <div class="logo"><div class="logo-dot"></div>CampusPulse</div>
+  </div>
   <div class="header-center" id="headerCenter">
     <span class="campus-name" id="headerCampusName">State University of Northern Negros</span>
     <span class="campus-sub" id="headerCampusSub">Multi-Campus Real-time Dashboard</span>
@@ -193,15 +400,15 @@
 </div>
 
 <div class="campus-bar">
-  <button class="campus-tab active all"     onclick="setCampusFilter('all',this)">🏫 All Campuses</button>
-  <button class="campus-tab main"           onclick="setCampusFilter('main',this)"><span style="background:var(--c-main);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Main Campus</button>
+  <button class="campus-tab active all"     onclick="setCampusFilter('all',this)">🏫 All</button>
+  <button class="campus-tab main"           onclick="setCampusFilter('main',this)"><span style="background:var(--c-main);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Main</button>
   <button class="campus-tab oldsagay"       onclick="setCampusFilter('oldsagay',this)"><span style="background:var(--c-oldsagay);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Old Sagay</button>
   <button class="campus-tab escalante"      onclick="setCampusFilter('escalante',this)"><span style="background:var(--c-escalante);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Escalante</button>
   <button class="campus-tab lagaan"         onclick="setCampusFilter('lagaan',this)"><span style="background:var(--c-lagaan);border-radius:50%;display:inline-block;width:7px;height:7px;flex-shrink:0"></span> Laga-an</button>
 </div>
 
-<div class="main">
-  <aside class="sidebar">
+<div class="app-body">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">
       <div class="section-label">Overview</div>
       <div class="stats-grid">
@@ -214,10 +421,10 @@
     <div class="sidebar-section">
       <div class="section-label">Campus Legend</div>
       <div class="campus-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-main)"></div>Main Campus — Sagay City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-oldsagay)"></div>Old Sagay Campus — Sagay City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-escalante)"></div>Escalante Campus — Escalante City</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--c-lagaan)"></div>Laga-an Campus — Calatrava</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-main)"></div>Main — Sagay City</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-oldsagay)"></div>Old Sagay — Sagay City</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-escalante)"></div>Escalante — Escalante City</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-lagaan)"></div>Laga-an — Calatrava</div>
       </div>
     </div>
     <div class="sidebar-section">
@@ -229,6 +436,10 @@
         <button class="filter-tab" onclick="setFilter('off-campus',this)">Outside</button>
       </div>
     </div>
+    <!-- Desktop add button inside sidebar -->
+    <div class="sidebar-section" style="display:flex;gap:7px;">
+      <button class="btn btn-primary" style="flex:1;padding:8px;font-size:0.75rem;border-radius:7px;border:none;font-family:'Syne',sans-serif;font-weight:700;cursor:pointer;" onclick="openCreateModal()">+ Add Student</button>
+    </div>
     <div class="section-label" style="padding:10px 16px 0">Students</div>
     <div class="student-list" id="studentList"></div>
   </aside>
@@ -236,13 +447,14 @@
   <div class="map-container">
     <div id="map"></div>
     <div class="map-controls">
-      <button class="map-btn active" onclick="setView('all',this)">🗺 All Campuses</button>
-      <button class="map-btn" onclick="setView('main',this)">📍 Main Campus</button>
+      <button class="map-btn active" onclick="setView('all',this)">🗺 All</button>
+      <button class="map-btn" onclick="setView('main',this)">📍 Main</button>
       <button class="map-btn" onclick="setView('oldsagay',this)">📍 Old Sagay</button>
       <button class="map-btn" onclick="setView('escalante',this)">📍 Escalante</button>
       <button class="map-btn" onclick="setView('lagaan',this)">📍 Laga-an</button>
     </div>
     <div class="info-panel" id="infoPanel">
+      <button class="info-panel-close" onclick="closeInfoPanel()">✕</button>
       <div class="info-panel-name" id="infoPanelName">—</div>
       <div class="info-panel-detail" id="infoPanelCourse">—</div>
       <div class="info-panel-detail" id="infoPanelMeta">—</div>
@@ -254,8 +466,8 @@
       </div>
       <div class="info-panel-actions">
         <button class="panel-btn edit-panel"  onclick="openEditModalFromPanel()">✏️ Edit</button>
-        <button class="panel-btn del-panel"   onclick="openConfirmFromPanel()">🗑 Delete</button>
-        <button class="panel-btn emg-panel"   onclick="openEmergencyModalFromPanel()">🚨 Emergency</button>
+        <button class="panel-btn del-panel"   onclick="openConfirmFromPanel()">🗑 Del</button>
+        <button class="panel-btn emg-panel"   onclick="openEmergencyModalFromPanel()">🚨 SOS</button>
       </div>
     </div>
     <div class="activity-log">
@@ -265,13 +477,32 @@
   </div>
 </div>
 
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" id="bottomNav">
+  <button class="bottom-nav-btn" id="navMap" onclick="mobileNav('map')">
+    <span class="nav-icon">🗺️</span>Map
+  </button>
+  <button class="bottom-nav-btn" id="navList" onclick="mobileNav('list')">
+    <span class="nav-icon">👥</span>Students
+  </button>
+  <button class="bottom-nav-btn" id="navStats" onclick="mobileNav('stats')">
+    <span class="nav-icon">📊</span>Stats
+  </button>
+  <button class="bottom-nav-btn" id="navLog" onclick="mobileNav('log')">
+    <span class="nav-icon">⚡</span>Log
+  </button>
+</nav>
+
+<!-- FAB (mobile add) -->
+<button class="fab" onclick="openCreateModal()" title="Add Student">＋</button>
+
 <!-- CREATE MODAL -->
 <div class="modal-overlay" id="createOverlay">
   <div class="modal">
     <div class="modal-title">Add Student <span class="modal-badge create">CREATE</span></div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" id="cFirstName" placeholder="e.g. Maria"/></div>
-      <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" id="cLastName" placeholder="e.g. Santos"/></div>
+      <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" id="cFirstName" placeholder="e.g. Maria" autocomplete="given-name"/></div>
+      <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" id="cLastName" placeholder="e.g. Santos" autocomplete="family-name"/></div>
     </div>
     <div class="form-group"><label class="form-label">Course *</label><input class="form-input" id="cCourse" placeholder="e.g. BS Information Technology"/></div>
     <div class="form-row">
@@ -291,8 +522,8 @@
     <div class="modal-title">Edit Student <span class="modal-badge update">UPDATE</span></div>
     <input type="hidden" id="eId"/>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" id="eFirstName"/></div>
-      <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" id="eLastName"/></div>
+      <div class="form-group"><label class="form-label">First Name *</label><input class="form-input" id="eFirstName" autocomplete="given-name"/></div>
+      <div class="form-group"><label class="form-label">Last Name *</label><input class="form-input" id="eLastName" autocomplete="family-name"/></div>
     </div>
     <div class="form-group"><label class="form-label">Course *</label><input class="form-input" id="eCourse"/></div>
     <div class="form-row">
@@ -336,7 +567,7 @@
       <div class="emg-coords" id="emgCoords">—</div>
       <div class="emg-note" id="emgNote">—</div>
       <button onclick="removeEmergencyMarker()" style="
-        margin-top:10px;width:100%;padding:7px;border-radius:7px;
+        margin-top:10px;width:100%;padding:9px;border-radius:7px;
         border:1px solid rgba(239,68,68,0.4);background:rgba(239,68,68,0.08);
         color:var(--danger);font-family:'Syne',sans-serif;font-weight:700;
         font-size:0.72rem;cursor:pointer;transition:all 0.2s;
@@ -357,7 +588,6 @@
 <script>
 // ════════════════════════════════════════════════════
 // CAMPUS DEFINITIONS
-// radius: tight boundary around campus only (~100m)
 // ════════════════════════════════════════════════════
 const CAMPUSES = {
   main:      { id:'main',      name:'SUNN Main Campus',      location:'Sagay City, Negros Occidental',               lat:10.8942,  lng:123.4175, color:'#00e5ff', radius:100 },
@@ -376,14 +606,85 @@ const HEADER_INFO = {
 
 const AVATAR_COLORS=['#7c3aed','#db2777','#ea580c','#16a34a','#0891b2','#dc2626','#9333ea','#0284c7'];
 
-// ── NO static students: all records arrive from student-tracker.html via live GPS ──
 let students = [];
 let activeFilter='all', activeCampus='all', selectedId=null, deleteTargetId=null, emergencyTargetId=null, markers={};
 
 // ════════════════════════════════════════════════════
+// MOBILE NAV STATE
+// ════════════════════════════════════════════════════
+let mobileView = 'map'; // 'map' | 'list' | 'stats' | 'log'
+
+function isMobile() { return window.innerWidth <= 768; }
+
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebarOverlay');
+  const isOpen   = sidebar.classList.contains('open');
+  if (isOpen) { closeSidebar(); }
+  else {
+    sidebar.classList.add('open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function mobileNav(view) {
+  mobileView = view;
+  // Update active state on nav buttons
+  ['map','list','stats','log'].forEach(v => {
+    const btn = document.getElementById('nav' + v.charAt(0).toUpperCase() + v.slice(1));
+    if (btn) btn.classList.toggle('active', v === view);
+  });
+
+  const sidebar     = document.getElementById('sidebar');
+  const mapCont     = document.querySelector('.map-container');
+  const activityLog = document.querySelector('.activity-log');
+
+  // Reset
+  mapCont.style.display = 'block';
+  activityLog.style.display = '';
+
+  if (view === 'map') {
+    closeSidebar();
+    setTimeout(() => map.invalidateSize(), 50);
+  } else if (view === 'list') {
+    toggleSidebar();
+  } else if (view === 'stats') {
+    toggleSidebar();
+    // Scroll sidebar to top to show stats
+    document.getElementById('sidebar').scrollTop = 0;
+  } else if (view === 'log') {
+    closeSidebar();
+    // Show activity log prominently
+    activityLog.style.display = 'block';
+  }
+}
+
+// Keep map sized correctly on resize / orientation change
+window.addEventListener('resize', () => {
+  setTimeout(() => map.invalidateSize(), 100);
+  if (!isMobile()) {
+    closeSidebar();
+    document.body.style.overflow = '';
+  }
+});
+
+// ════════════════════════════════════════════════════
 // MAP SETUP
 // ════════════════════════════════════════════════════
-const map = L.map('map', { center:[10.76, 123.43], zoom:10 });
+const map = L.map('map', { center:[10.76, 123.43], zoom:10, zoomControl:true });
+
+// Move zoom control to bottom-right on mobile to avoid overlap
+if (isMobile()) {
+  map.zoomControl.setPosition('bottomright');
+}
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   maxZoom:19
@@ -396,21 +697,11 @@ Object.values(CAMPUSES).forEach(c => {
     iconSize: [14, 14],
     iconAnchor: [7, 7]
   });
-
   L.marker([c.lat, c.lng], { icon }).addTo(map)
-    .bindPopup(
-      '<div class="popup-name">🏫 ' + c.name + '</div>' +
-      '<div class="popup-detail">📍 ' + c.location + '</div>'
-    );
-
-  // Tight circle = actual campus boundary displayed on map
+    .bindPopup('<div class="popup-name">🏫 ' + c.name + '</div><div class="popup-detail">📍 ' + c.location + '</div>');
   L.circle([c.lat, c.lng], {
-    radius: c.radius,
-    color: c.color,
-    fillColor: c.color,
-    fillOpacity: 0.08,
-    weight: 1.5,
-    dashArray: '5'
+    radius: c.radius, color: c.color, fillColor: c.color,
+    fillOpacity: 0.08, weight: 1.5, dashArray: '5'
   }).addTo(map);
 });
 
@@ -453,8 +744,14 @@ function animateCount(id, target) {
   }, 18);
 }
 
+function closeInfoPanel() {
+  document.getElementById('infoPanel').classList.remove('visible');
+  selectedId = null;
+  renderStudentList();
+}
+
 // ════════════════════════════════════════════════════
-// HEADER UPDATE on campus tab click
+// HEADER UPDATE
 // ════════════════════════════════════════════════════
 function updateHeader(campusId) {
   const info  = HEADER_INFO[campusId] || HEADER_INFO['all'];
@@ -465,6 +762,41 @@ function updateHeader(campusId) {
   subEl.textContent  = info.sub;
   document.getElementById('mainHeader').style.borderBottomColor =
     campusId === 'all' ? 'var(--border)' : info.color.replace('var(','').replace(')','').trim();
+}
+
+// ════════════════════════════════════════════════════
+// CREATE STUDENT
+// ════════════════════════════════════════════════════
+function openCreateModal() {
+  document.getElementById('createOverlay').classList.add('visible');
+}
+function closeCreateModal() {
+  document.getElementById('createOverlay').classList.remove('visible');
+  ['cFirstName','cLastName','cCourse','cHometown','cStudentId'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+}
+
+function createStudent() {
+  const fn       = document.getElementById('cFirstName').value.trim();
+  const ln       = document.getElementById('cLastName').value.trim();
+  const course   = document.getElementById('cCourse').value.trim();
+  const year     = document.getElementById('cYear').value;
+  const campus   = document.getElementById('cCampus').value;
+  const hometown = document.getElementById('cHometown').value.trim();
+  const studentId= document.getElementById('cStudentId').value.trim();
+  if (!fn || !ln || !course || !hometown) { alert('Please fill in required fields.'); return; }
+  const c = CAMPUSES[campus];
+  const ns = {
+    id: Date.now(), firstName:fn, lastName:ln, course, year,
+    campus, hometown, studentId: studentId || '—',
+    status:'off-campus', lat:c.lat, lng:c.lng,
+    rawLat:null, rawLng:null, isLive:false
+  };
+  students.push(ns);
+  closeCreateModal();
+  renderAll();
+  logActivity(fn + ' ' + ln, 'added to dashboard');
 }
 
 // ════════════════════════════════════════════════════
@@ -503,7 +835,10 @@ function renderStudentList() {
     const c   = campusOf(s);
     const div = document.createElement('div');
     div.className = 'student-item' + (selectedId === s.id ? ' selected' : '');
-    div.onclick = () => selectStudent(s.id);
+    div.onclick = () => {
+      selectStudent(s.id);
+      if (isMobile()) closeSidebar();
+    };
     const statusLabel = s.status === 'on-campus' ? '📍 Inside Campus' : '🏠 Outside Campus';
     div.innerHTML = `
       <div class="student-avatar" style="background:${avatarColor(s.id)}22;color:${avatarColor(s.id)};border:1.5px solid ${avatarColor(s.id)}44">${initials(s)}</div>
@@ -528,8 +863,6 @@ function renderMarkers() {
     const c   = campusOf(s);
     const col = s.status === 'on-campus' ? c.color : '#94a3b8';
     const sz  = s.isLive ? 13 : 10;
-    const markerLat = c.lat;
-    const markerLng = c.lng;
 
     const icon = L.divIcon({
       className: '',
@@ -546,7 +879,7 @@ function renderMarkers() {
       '<div class="popup-status ' + (s.status === 'on-campus' ? 'green' : 'yellow') + '">' + (s.status === 'on-campus' ? '✅ Inside Campus' : '🏠 Outside Campus') + '</div>' +
       (s.isLive ? '<div class="popup-live">📡 Live GPS Active</div>' : '');
 
-    const m = L.marker([markerLat, markerLng], { icon }).bindPopup(popupHtml);
+    const m = L.marker([c.lat, c.lng], { icon }).bindPopup(popupHtml);
     m.on('click', () => selectStudent(s.id));
     markers[s.id] = m;
     markerCluster.addLayer(m);
@@ -567,7 +900,6 @@ function selectStudent(id) {
   const c = campusOf(s);
   renderStudentList();
 
-  // Pan to campus centre only — never to real GPS coordinates
   map.setView([c.lat, c.lng], 16, { animate:true });
   if (markers[id]) markers[id].openPopup();
 
@@ -586,7 +918,7 @@ function selectStudent(id) {
 }
 
 // ════════════════════════════════════════════════════
-// FILTERS + HEADER UPDATE
+// FILTERS
 // ════════════════════════════════════════════════════
 function setFilter(f, btn) {
   activeFilter = f;
@@ -599,10 +931,7 @@ function setCampusFilter(id, btn) {
   activeCampus = id;
   document.querySelectorAll('.campus-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
-
-  // ── Fix #3: update header when campus tab is clicked ──
   updateHeader(id);
-
   renderAll();
   if (id !== 'all') {
     const c = CAMPUSES[id];
@@ -610,6 +939,8 @@ function setCampusFilter(id, btn) {
   } else {
     map.setView([10.76, 123.43], 10, { animate:true });
   }
+  // Close sidebar on mobile after selecting campus
+  if (isMobile()) closeSidebar();
 }
 
 function setView(v, btn) {
@@ -620,9 +951,7 @@ function setView(v, btn) {
 }
 
 // ════════════════════════════════════════════════════
-// LIVE RECEIVER (BroadcastChannel + localStorage poll)
-// Fix #4: handleLiveUpdate runs silently in the background;
-//         it never focuses or interrupts the user.
+// LIVE RECEIVER
 // ════════════════════════════════════════════════════
 function showReceiverBanner(name) {
   const b = document.getElementById('receiverBanner');
@@ -634,7 +963,6 @@ function showReceiverBanner(name) {
 
 function handleLiveUpdate(p) {
   if (!p || !p.studentName || !p.latitude || !p.longitude) return;
-
   const trueStatus = computeStatusFromCoords(p.latitude, p.longitude);
 
   let s = students.find(x =>
@@ -643,87 +971,58 @@ function handleLiveUpdate(p) {
   );
 
   if (s) {
-    // Real GPS — stored privately, only accessible via emergency unlock
-    s.rawLat      = p.latitude;
-    s.rawLng      = p.longitude;
-    s.rawAccuracy = p.accuracy;
-    s.status      = trueStatus;
-    s.campus      = p.campus    || s.campus;
-    s.course      = p.course    || s.course;
-    s.year        = p.year      || s.year;
-    s.hometown    = p.hometown  || s.hometown;
-    s.studentId   = p.studentId || s.studentId;
-    s.isLive      = true;
-    s.lastLiveUpdate = p.timestamp;
-
-    // Display position — always the campus centre, NEVER the real GPS
-    const c = CAMPUSES[s.campus] || CAMPUSES.main;
-    s.lat = c.lat;
-    s.lng = c.lng;
-
+    s.rawLat=p.latitude; s.rawLng=p.longitude; s.rawAccuracy=p.accuracy;
+    s.status=trueStatus;
+    s.campus=p.campus||s.campus; s.course=p.course||s.course;
+    s.year=p.year||s.year; s.hometown=p.hometown||s.hometown;
+    s.studentId=p.studentId||s.studentId; s.isLive=true;
+    s.lastLiveUpdate=p.timestamp;
+    const c=CAMPUSES[s.campus]||CAMPUSES.main;
+    s.lat=c.lat; s.lng=c.lng;
     renderAll();
-    logActivity(fullName(s), '📡 GPS — ' + (trueStatus === 'on-campus' ? 'Inside Campus' : 'Outside Campus'), true);
+    logActivity(fullName(s),'📡 GPS — '+(trueStatus==='on-campus'?'Inside':'Outside')+' Campus',true);
   } else {
-    // Brand-new student arriving from tracker for the first time
-    const parts = p.studentName.trim().split(' ');
-    const campusKey = p.campus || 'main';
-    const c = CAMPUSES[campusKey] || CAMPUSES.main;
-    const ns = {
-      id:           Date.now(),
-      firstName:    parts[0] || 'Unknown',
-      lastName:     parts.slice(1).join(' ') || '',
-      course:       p.course    || '—',
-      year:         p.year      || '—',
-      campus:       campusKey,
-      hometown:     p.hometown  || '—',
-      studentId:    p.studentId || '—',
-      status:       trueStatus,
-      lat:          c.lat,        // always campus centre on the map
-      lng:          c.lng,
-      rawLat:       p.latitude,   // real GPS — emergency only
-      rawLng:       p.longitude,
-      rawAccuracy:  p.accuracy,
-      isLive:       true,
-      lastLiveUpdate: p.timestamp
+    const parts=p.studentName.trim().split(' ');
+    const campusKey=p.campus||'main';
+    const c=CAMPUSES[campusKey]||CAMPUSES.main;
+    const ns={
+      id:Date.now(),firstName:parts[0]||'Unknown',lastName:parts.slice(1).join(' ')||'',
+      course:p.course||'—',year:p.year||'—',campus:campusKey,
+      hometown:p.hometown||'—',studentId:p.studentId||'—',
+      status:trueStatus,lat:c.lat,lng:c.lng,
+      rawLat:p.latitude,rawLng:p.longitude,rawAccuracy:p.accuracy,
+      isLive:true,lastLiveUpdate:p.timestamp
     };
     students.push(ns);
     renderAll();
-    logActivity(fullName(ns), 'joined via Live Tracker 📡', true);
+    logActivity(fullName(ns),'joined via Live Tracker 📡',true);
   }
   showReceiverBanner(p.studentName);
 }
 
-// Haversine in metres (mirrors server logic)
-function haversineMeters(lat1, lng1, lat2, lng2) {
-  const R = 6_371_000;
-  const dLat = (lat2-lat1)*Math.PI/180;
-  const dLng = (lng2-lng1)*Math.PI/180;
-  const a = Math.sin(dLat/2)*Math.sin(dLat/2)
-          + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
-  return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+function haversineMeters(lat1,lng1,lat2,lng2){
+  const R=6_371_000,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 }
 
-// Fix #5: status = inside OR outside only, determined by tight geofence
-function computeStatusFromCoords(lat, lng) {
-  for (const c of Object.values(CAMPUSES)) {
-    if (haversineMeters(lat, lng, c.lat, c.lng) <= c.radius) return 'on-campus';
-  }
+function computeStatusFromCoords(lat,lng){
+  for(const c of Object.values(CAMPUSES))
+    if(haversineMeters(lat,lng,c.lat,c.lng)<=c.radius) return 'on-campus';
   return 'off-campus';
 }
 
-// Listen for tracker updates
 try {
   const bc = new BroadcastChannel('campuspulse-tracker');
   bc.onmessage = e => handleLiveUpdate(e.data);
 } catch(e) {}
 
-// Poll localStorage fallback (same-origin tab may not share BroadcastChannel)
 setInterval(() => {
   try {
-    const raw = localStorage.getItem('campuspulse_last_update');
-    if (!raw) return;
-    const p = JSON.parse(raw);
-    if (Date.now() - new Date(p.timestamp).getTime() < 10000) {
+    const raw=localStorage.getItem('campuspulse_last_update');
+    if(!raw) return;
+    const p=JSON.parse(raw);
+    if(Date.now()-new Date(p.timestamp).getTime()<10000){
       handleLiveUpdate(p);
       localStorage.removeItem('campuspulse_last_update');
     }
@@ -734,249 +1033,194 @@ setInterval(() => {
 // EDIT STUDENT
 // ════════════════════════════════════════════════════
 function openEditModal(id) {
-  const s = students.find(x => x.id === id); if (!s) return;
-  const clean = v => (!v || v === '—' || v === '— (Live Tracker)' || v === '— (via GPS)') ? '' : v;
-  document.getElementById('eId').value        = s.id;
-  document.getElementById('eFirstName').value = clean(s.firstName);
-  document.getElementById('eLastName').value  = clean(s.lastName);
-  document.getElementById('eCourse').value    = clean(s.course);
-  document.getElementById('eYear').value      = clean(s.year) || '1st Year';
-  document.getElementById('eCampus').value    = s.campus || 'main';
-  document.getElementById('eHometown').value  = clean(s.hometown);
-  document.getElementById('eStudentId').value = clean(s.studentId);
+  const s=students.find(x=>x.id===id); if(!s) return;
+  const clean=v=>(!v||v==='—'||v==='— (Live Tracker)'||v==='— (via GPS)')?'':v;
+  document.getElementById('eId').value=s.id;
+  document.getElementById('eFirstName').value=clean(s.firstName);
+  document.getElementById('eLastName').value=clean(s.lastName);
+  document.getElementById('eCourse').value=clean(s.course);
+  document.getElementById('eYear').value=clean(s.year)||'1st Year';
+  document.getElementById('eCampus').value=s.campus||'main';
+  document.getElementById('eHometown').value=clean(s.hometown);
+  document.getElementById('eStudentId').value=clean(s.studentId);
   document.getElementById('editOverlay').classList.add('visible');
 }
-function openEditModalFromPanel() { if (selectedId) openEditModal(selectedId); }
-function closeEditModal() { document.getElementById('editOverlay').classList.remove('visible'); }
+function openEditModalFromPanel(){if(selectedId) openEditModal(selectedId);}
+function closeEditModal(){document.getElementById('editOverlay').classList.remove('visible');}
 
-function updateStudent() {
-  const id      = parseInt(document.getElementById('eId').value);
-  const fn      = document.getElementById('eFirstName').value.trim();
-  const ln      = document.getElementById('eLastName').value.trim();
-  const course  = document.getElementById('eCourse').value.trim();
-  const year    = document.getElementById('eYear').value;
-  const campus  = document.getElementById('eCampus').value;
-  const hometown= document.getElementById('eHometown').value.trim();
-  const studentId= document.getElementById('eStudentId').value.trim();
-  if (!fn || !ln || !hometown) { alert('Please fill in required fields.'); return; }
-  const s = students.find(x => x.id === id); if (!s) return;
+function updateStudent(){
+  const id=parseInt(document.getElementById('eId').value);
+  const fn=document.getElementById('eFirstName').value.trim();
+  const ln=document.getElementById('eLastName').value.trim();
+  const course=document.getElementById('eCourse').value.trim();
+  const year=document.getElementById('eYear').value;
+  const campus=document.getElementById('eCampus').value;
+  const hometown=document.getElementById('eHometown').value.trim();
+  const studentId=document.getElementById('eStudentId').value.trim();
+  if(!fn||!ln||!hometown){alert('Please fill in required fields.');return;}
+  const s=students.find(x=>x.id===id); if(!s) return;
   closeEditModal();
-  const cd = CAMPUSES[campus];
-  const campusChanged = s.campus !== campus;
-  // If campus changed, reset position to new campus centre
-  if (campusChanged) { s.lat = cd.lat; s.lng = cd.lng; }
-  Object.assign(s, { firstName:fn, lastName:ln, course, year, campus, hometown, studentId });
-  // Recompute status from current lat/lng
-  s.status = computeStatusFromCoords(s.lat, s.lng);
+  const cd=CAMPUSES[campus];
+  if(s.campus!==campus){s.lat=cd.lat;s.lng=cd.lng;}
+  Object.assign(s,{firstName:fn,lastName:ln,course,year,campus,hometown,studentId});
+  s.status=computeStatusFromCoords(s.lat,s.lng);
   renderAll();
-  if (selectedId === id) selectStudent(id);
-  logActivity(fn + ' ' + ln, 'updated — ' + cd.name.replace('SUNN ', ''));
+  if(selectedId===id) selectStudent(id);
+  logActivity(fn+' '+ln,'updated — '+cd.name.replace('SUNN ',''));
 }
 
 // ════════════════════════════════════════════════════
 // DELETE STUDENT
 // ════════════════════════════════════════════════════
-function openConfirm(id) {
-  const s = students.find(x => x.id === id); if (!s) return;
-  deleteTargetId = id;
-  document.getElementById('confirmMsg').textContent = 'Remove "' + fullName(s) + '" from the dashboard?';
+function openConfirm(id){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  deleteTargetId=id;
+  document.getElementById('confirmMsg').textContent='Remove "'+fullName(s)+'" from the dashboard?';
   document.getElementById('confirmOverlay').classList.add('visible');
 }
-function openConfirmFromPanel() { if (selectedId) openConfirm(selectedId); }
-function closeConfirm() { deleteTargetId = null; document.getElementById('confirmOverlay').classList.remove('visible'); }
+function openConfirmFromPanel(){if(selectedId) openConfirm(selectedId);}
+function closeConfirm(){deleteTargetId=null;document.getElementById('confirmOverlay').classList.remove('visible');}
 
-function confirmDelete() {
-  if (!deleteTargetId) return;
-  const s = students.find(x => x.id === deleteTargetId);
-  students = students.filter(x => x.id !== deleteTargetId);
-  if (selectedId === deleteTargetId) {
-    selectedId = null;
+function confirmDelete(){
+  if(!deleteTargetId) return;
+  const s=students.find(x=>x.id===deleteTargetId);
+  students=students.filter(x=>x.id!==deleteTargetId);
+  if(selectedId===deleteTargetId){
+    selectedId=null;
     document.getElementById('infoPanel').classList.remove('visible');
   }
-  logActivity(s ? fullName(s) : 'Student', 'was removed');
+  logActivity(s?fullName(s):'Student','was removed');
   renderAll();
   closeConfirm();
 }
 
 // ════════════════════════════════════════════════════
 // EMERGENCY LOCATION
-// Admin-only: reveals the student's REAL raw GPS position
-// — separate from the campus-snapped display position
 // ════════════════════════════════════════════════════
-const ADMIN_KEY = 'Johnkennieth07';
-let emergencyMarker = null; // special red pin shown only during emergency
+const ADMIN_KEY='Johnkennieth07';
+let emergencyMarker=null;
 
-function openEmergencyModal(id) {
-  const s = students.find(x => x.id === id); if (!s) return;
-  emergencyTargetId = id;
-  document.getElementById('emgStudentName').textContent =
-    fullName(s) + ' (' + (s.studentId || 'no ID') + ')';
-  document.getElementById('emgAdminKey').value = '';
+function openEmergencyModal(id){
+  const s=students.find(x=>x.id===id); if(!s) return;
+  emergencyTargetId=id;
+  document.getElementById('emgStudentName').textContent=fullName(s)+' ('+(s.studentId||'no ID')+')';
+  document.getElementById('emgAdminKey').value='';
   document.getElementById('emgResult').classList.remove('visible');
-  // Clear any previous emergency marker
   clearEmergencyMarker();
   document.getElementById('emergencyOverlay').classList.add('visible');
 }
-function openEmergencyModalFromPanel() { if (selectedId) openEmergencyModal(selectedId); }
+function openEmergencyModalFromPanel(){if(selectedId) openEmergencyModal(selectedId);}
 
-function closeEmergencyModal() {
-  emergencyTargetId = null;
+function closeEmergencyModal(){
+  emergencyTargetId=null;
   document.getElementById('emergencyOverlay').classList.remove('visible');
-  // Reset modal form for next use — but keep the red pin on the map
-  // so admin can still see the student's location after closing
   document.getElementById('emgResult').classList.remove('visible');
-  document.getElementById('emgAdminKey').value   = '';
-  document.getElementById('emgCoords').textContent = '—';
-  document.getElementById('emgNote').textContent   = '—';
+  document.getElementById('emgAdminKey').value='';
+  document.getElementById('emgCoords').textContent='—';
+  document.getElementById('emgNote').textContent='—';
 }
 
-function clearEmergencyMarker() {
-  if (emergencyMarker) { map.removeLayer(emergencyMarker); emergencyMarker = null; }
+function clearEmergencyMarker(){
+  if(emergencyMarker){map.removeLayer(emergencyMarker);emergencyMarker=null;}
 }
 
-// Called by the "Remove Emergency Pin" button inside the result box
-function removeEmergencyMarker() {
+function removeEmergencyMarker(){
   clearEmergencyMarker();
-  // Hide the result box and reset the modal back to input state
   document.getElementById('emgResult').classList.remove('visible');
-  document.getElementById('emgCoords').textContent = '—';
-  document.getElementById('emgNote').textContent   = '—';
-  document.getElementById('emgAdminKey').value     = '';
-  logActivity('Admin', '🗑 Emergency pin removed from map', false);
+  document.getElementById('emgCoords').textContent='—';
+  document.getElementById('emgNote').textContent='—';
+  document.getElementById('emgAdminKey').value='';
+  logActivity('Admin','🗑 Emergency pin removed from map',false);
 }
 
-function submitEmergencyAccess() {
-  const adminKey = document.getElementById('emgAdminKey').value.trim();
-  if (!adminKey) { alert('Please enter the admin key.'); return; }
-  if (!emergencyTargetId) return;
-
-  if (adminKey !== ADMIN_KEY) {
-    const inp = document.getElementById('emgAdminKey');
-    inp.style.borderColor = 'var(--danger)';
-    inp.style.animation = 'shake 0.4s ease';
-    setTimeout(() => { inp.style.borderColor = ''; inp.style.animation = ''; }, 600);
+function submitEmergencyAccess(){
+  const adminKey=document.getElementById('emgAdminKey').value.trim();
+  if(!adminKey){alert('Please enter the admin key.');return;}
+  if(!emergencyTargetId) return;
+  if(adminKey!==ADMIN_KEY){
+    const inp=document.getElementById('emgAdminKey');
+    inp.style.borderColor='var(--danger)';
+    inp.style.animation='shake 0.4s ease';
+    setTimeout(()=>{inp.style.borderColor='';inp.style.animation='';},600);
     alert('❌ Invalid admin key. Access denied.');
     return;
   }
-
-  const s = students.find(x => x.id === emergencyTargetId);
-  if (!s) { alert('Student not found.'); return; }
-
-  const hasRealGPS = s.rawLat !== undefined && s.rawLng !== undefined
-                  && s.rawLat !== null    && s.rawLng !== null;
-
-  if (!hasRealGPS) {
+  const s=students.find(x=>x.id===emergencyTargetId);
+  if(!s){alert('Student not found.');return;}
+  const hasRealGPS=s.rawLat!==undefined&&s.rawLng!==undefined&&s.rawLat!==null&&s.rawLng!==null;
+  if(!hasRealGPS){
     alert('⚠️ No live GPS available for this student yet.\n\nThe student must open student-tracker.html and start tracking before their real location can be revealed.');
     return;
   }
-
-  const revealLat = s.rawLat;
-  const revealLng = s.rawLng;
-  const accuracy  = s.rawAccuracy ? '±' + Math.round(s.rawAccuracy) + 'm' : 'unknown';
-  const lastSeen  = s.lastLiveUpdate ? new Date(s.lastLiveUpdate).toLocaleString('en-PH') : 'unknown';
-
-  document.getElementById('emgCoords').textContent = 'Lat: ' + revealLat.toFixed(6) + '\nLng: ' + revealLng.toFixed(6);
-  document.getElementById('emgNote').textContent   = 'GPS accuracy: ' + accuracy + '  ·  Last update: ' + lastSeen;
+  const revealLat=s.rawLat,revealLng=s.rawLng;
+  const accuracy=s.rawAccuracy?'±'+Math.round(s.rawAccuracy)+'m':'unknown';
+  const lastSeen=s.lastLiveUpdate?new Date(s.lastLiveUpdate).toLocaleString('en-PH'):'unknown';
+  document.getElementById('emgCoords').textContent='Lat: '+revealLat.toFixed(6)+'\nLng: '+revealLng.toFixed(6);
+  document.getElementById('emgNote').textContent='GPS accuracy: '+accuracy+'  ·  Last update: '+lastSeen;
   document.getElementById('emgResult').classList.add('visible');
-
-  logActivity(fullName(s), '🚨 EMERGENCY LOCATION revealed by admin', false);
-
+  logActivity(fullName(s),'🚨 EMERGENCY LOCATION revealed by admin',false);
   clearEmergencyMarker();
-  const emgIcon = L.divIcon({
-    className: '',
-    html: '<div style="width:18px;height:18px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 0 0 3px rgba(239,68,68,0.4),0 0 20px rgba(239,68,68,0.8);"></div>',
-    iconSize: [18, 18],
-    iconAnchor: [9, 18]
+  const emgIcon=L.divIcon({
+    className:'',
+    html:'<div style="width:18px;height:18px;background:#ef4444;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 0 0 3px rgba(239,68,68,0.4),0 0 20px rgba(239,68,68,0.8);"></div>',
+    iconSize:[18,18],iconAnchor:[9,18]
   });
-
-  const emgPopup =
-    '<div class="popup-name" style="color:#ef4444">🚨 ' + fullName(s) + '</div>' +
-    '<div class="popup-detail" style="color:#ef4444;font-weight:600">EMERGENCY — Real GPS Location</div>' +
-    '<div class="popup-detail" style="font-family:monospace;margin-top:5px">' + revealLat.toFixed(6) + ', ' + revealLng.toFixed(6) + '</div>' +
-    '<div class="popup-detail">Accuracy: ' + accuracy + '</div>' +
-    '<div class="popup-detail">Last seen: ' + lastSeen + '</div>' +
+  const emgPopup=
+    '<div class="popup-name" style="color:#ef4444">🚨 '+fullName(s)+'</div>'+
+    '<div class="popup-detail" style="color:#ef4444;font-weight:600">EMERGENCY — Real GPS Location</div>'+
+    '<div class="popup-detail" style="font-family:monospace;margin-top:5px">'+revealLat.toFixed(6)+', '+revealLng.toFixed(6)+'</div>'+
+    '<div class="popup-detail">Accuracy: '+accuracy+'</div>'+
+    '<div class="popup-detail">Last seen: '+lastSeen+'</div>'+
     '<button onclick="removeEmergencyMarker()" style="margin-top:10px;width:100%;padding:6px 10px;border-radius:6px;border:1px solid rgba(239,68,68,0.5);background:rgba(239,68,68,0.1);color:#ef4444;font-family:Syne,sans-serif;font-weight:700;font-size:0.7rem;cursor:pointer;">🗑 Remove Pin</button>';
-
-  emergencyMarker = L.marker([revealLat, revealLng], { icon: emgIcon, zIndexOffset: 9999 })
-    .addTo(map)
-    .bindPopup(emgPopup, { maxWidth: 260 })
-    .openPopup();
-
-  map.setView([revealLat, revealLng], 18, { animate: true });
+  emergencyMarker=L.marker([revealLat,revealLng],{icon:emgIcon,zIndexOffset:9999})
+    .addTo(map).bindPopup(emgPopup,{maxWidth:260}).openPopup();
+  map.setView([revealLat,revealLng],18,{animate:true});
 }
 
 // ════════════════════════════════════════════════════
-// SIGNALR — receive live GPS from student devices
-// window.location.origin auto-detects the server URL
-// whether running locally or on Render
+// SIGNALR
 // ════════════════════════════════════════════════════
 const dashConnection = new signalR.HubConnectionBuilder()
-  .withUrl(window.location.origin + '/locationHub')
-  .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+  .withUrl(window.location.origin+'/locationHub')
+  .withAutomaticReconnect([0,2000,5000,10000,30000])
   .configureLogging(signalR.LogLevel.Warning)
   .build();
 
-// Receive live GPS update from a student's phone
-dashConnection.on('ReceiveLocationUpdate', (data) => {
+dashConnection.on('ReceiveLocationUpdate',(data)=>{
   handleLiveUpdate({
-    studentName: data.studentName || data.StudentName,
-    studentId:   data.studentId   || data.StudentId,
-    course:      data.course      || data.Course,
-    year:        data.year        || data.Year,
-    hometown:    data.hometown    || data.Hometown,
-    campus:      data.campus      || data.Campus,
-    latitude:    data.latitude    || data.Latitude,
-    longitude:   data.longitude   || data.Longitude,
-    accuracy:    data.accuracy    || data.Accuracy,
-    status:      data.status      || data.Status,
-    timestamp:   data.timestamp   || data.Timestamp,
+    studentName:data.studentName||data.StudentName,studentId:data.studentId||data.StudentId,
+    course:data.course||data.Course,year:data.year||data.Year,
+    hometown:data.hometown||data.Hometown,campus:data.campus||data.Campus,
+    latitude:data.latitude||data.Latitude,longitude:data.longitude||data.Longitude,
+    accuracy:data.accuracy||data.Accuracy,status:data.status||data.Status,
+    timestamp:data.timestamp||data.Timestamp,
   });
 });
+dashConnection.on('StudentAdded',(student)=>{logActivity(student.name||student.Name,'added to system');renderAll();});
+dashConnection.on('StudentRemoved',(id)=>{
+  students=students.filter(x=>x.id!==id);
+  if(selectedId===id){selectedId=null;document.getElementById('infoPanel').classList.remove('visible');}
+  renderAll();logActivity('Student','removed from system');
+});
+dashConnection.onreconnecting(()=>logActivity('System','🔄 Reconnecting to server…'));
+dashConnection.onreconnected(()=>logActivity('System','✅ Reconnected to server'));
+dashConnection.onclose(()=>logActivity('System','⚠️ Connection lost — will retry'));
 
-// A student was added via the Add Student form
-dashConnection.on('StudentAdded', (student) => {
-  logActivity(student.name || student.Name, 'added to system');
-  renderAll();
-});
-
-// A student was deleted
-dashConnection.on('StudentRemoved', (id) => {
-  students = students.filter(x => x.id !== id);
-  if (selectedId === id) {
-    selectedId = null;
-    document.getElementById('infoPanel').classList.remove('visible');
-  }
-  renderAll();
-  logActivity('Student', 'removed from system');
-});
-
-// Connection lifecycle
-dashConnection.onreconnecting(() => {
-  logActivity('System', '🔄 Reconnecting to server…');
-});
-dashConnection.onreconnected(() => {
-  logActivity('System', '✅ Reconnected to server');
-});
-dashConnection.onclose(() => {
-  logActivity('System', '⚠️ Connection lost — will retry');
-});
-
-async function startDashSignalR() {
-  try {
-    await dashConnection.start();
-    logActivity('System', '🔗 Live updates connected');
-  } catch (err) {
-    setTimeout(startDashSignalR, 5000);
-  }
+async function startDashSignalR(){
+  try{await dashConnection.start();logActivity('System','🔗 Live updates connected');}
+  catch(err){setTimeout(startDashSignalR,5000);}
 }
 
 // ════════════════════════════════════════════════════
 // BOOT
 // ════════════════════════════════════════════════════
 renderAll();
-logActivity('System', 'CampusPulse started — 4 campuses loaded');
-logActivity('System', 'Waiting for students from tracker…');
+logActivity('System','CampusPulse started — 4 campuses loaded');
+logActivity('System','Waiting for students from tracker…');
 startDashSignalR();
+
+// Init bottom nav — map is default active
+document.getElementById('navMap').classList.add('active');
 </script>
 </body>
 </html>

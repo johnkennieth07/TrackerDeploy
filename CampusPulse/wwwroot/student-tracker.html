@@ -381,6 +381,11 @@ function onGpsSuccess(position) {
   const acc = position.coords.accuracy;
   lastPosition = { lat, lng, acc };
 
+   if (acc > 150) {
+    addLog('⏳ Waiting for better GPS accuracy (±' + Math.round(acc) + 'm)…');
+    return;
+  }
+  
   document.getElementById('dispLat').textContent  = lat.toFixed(6);
   document.getElementById('dispLng').textContent  = lng.toFixed(6);
   document.getElementById('dispTime').textContent = new Date().toLocaleTimeString('en-PH', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
